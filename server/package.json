@@ -1,0 +1,13 @@
+{
+  "name": "todo-app-node",
+  "version": "1.0.0",
+  "description": "AUTH,USER,TODO",
+  "author": "julianscr@icloud.com",
+  "main": "server.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.16.1"
+  }
+}

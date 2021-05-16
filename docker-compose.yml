@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  db-mongo:
+    image: mongo
+    hostname: mongo
+    container_name: mongo-uas
+    ports:
+      - 27017:27017
+    volumes:
+      - ./db:/data/db
+  server:
+    image: todo-app-node
+    hostname: todo-app-node
+    container_name: todo-uas-node
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - 8081:3000
+    volumes:
+      - type: bind
+        source: ./server
+        target: /data
+    depends_on:
+      - db-mongo
+    environment:
+      - DATABASE_URL=db-mongo:27017
