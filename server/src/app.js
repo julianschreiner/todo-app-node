@@ -25,22 +25,22 @@ app.listen(app.get('port'), server =>{
 /* AUTH */
 app.get('/', authController.checkAuth)
 
+app.post('/auth/register', authController.register)
+
+app.post('/auth/login', authController.login)
+
+app.get('/auth/logout', authController.logout)
+
+app.get('/auth/refresh', authController.refresh)
+
 
 /* ToDo */
 app.post('/todo', todoController.createTodo)
 
-app.get('/todo/{userID}', (req, res, next) =>{
-  res.send('get todo for user');
-})
+app.get('/todo/user/:userID', todoController.getTodoForUser)
 
-app.get('/todo/{id}', (req, res, next) =>{
-  res.send('get particular todo');
-})
+app.get('/todo/:todoID', todoController.getTodo)
 
-app.delete('/todo/{id}', (req, res, next) =>{
-  res.send('delete particular todo');
-})
+app.delete('/todo/:todoID', todoController.deleteDoto)
 
-app.put('/todo/{id}', (req, res, next) =>{
-  res.send('update todo');
-})
+app.put('/todo/:todoID', todoController.updateTodo)

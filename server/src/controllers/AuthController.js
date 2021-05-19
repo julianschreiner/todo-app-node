@@ -20,11 +20,52 @@ const checkAuth = async (req, res, next) => {
     next()
   } catch(e) {
     console.log(e.message)
-    res.sendStatus(500) && next(error)
+    res.sendStatus(500) && next(e)
     
   }
 }
 
+const register = async (req, res, next) => {
+  try {
+      res.status(200).send('Register!')
+  } catch (e) {
+    console.log(e.message)
+    res.sendStatus(500) && next(e)
+  }
+}
+
+const login = async (req, res, next) => {
+  try {
+      res.status(200).send('Login!')
+  } catch (e) {
+    console.log(e.message)
+    res.sendStatus(500) && next(e)
+  }
+}
+
+
+const logout = async (req, res, next) => {
+  try {
+      res.status(200).send('Logout!')
+  } catch (e) {
+    console.log(e.message)
+    res.sendStatus(500) && next(e)
+  }
+}
+
+const refresh = async (req, res, next) => {
+  try {
+      res.status(200).send('Login!')
+  } catch (e) {
+    console.log(e.message)
+    res.sendStatus(500) && next(e)
+  }
+}
+
 module.exports = {
-  checkAuth
+  checkAuth,
+  register,
+  login,
+  logout,
+  refresh
 }

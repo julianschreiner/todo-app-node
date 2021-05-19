@@ -1,7 +1,9 @@
 const db = require('../connection/db')
 
 const createAuth = async (idToken) => {
-    /* TODO CHECK AUTH 
+    /* TODO CHECK AUTH */
+    /* PARSE TOKEN HERE AND CHECK FOR AVAILABILITY */
+    /*
     try {
         const decodedToken = await admin.auth().verifyIdToken(idToken)
         if(decodedToken){
