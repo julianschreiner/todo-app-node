@@ -21,7 +21,6 @@ app.listen(app.get('port'), server =>{
   console.info(`Server listen on port ${app.get('port')}`);
 })
 
-
 /* AUTH */
 app.get('/', authController.checkAuth)
 
@@ -35,12 +34,12 @@ app.get('/auth/refresh', authController.refresh)
 
 
 /* ToDo */
-app.post('/todo', todoController.createTodo)
+app.post('/todo', authController.checkAuth, todoController.createTodo)
 
-app.get('/todo/user/:userID', todoController.getTodoForUser)
+app.get('/todo/user/:userID', authController.checkAuth, todoController.getTodoForUser)
 
-app.get('/todo/:todoID', todoController.getTodo)
+app.get('/todo/:todoID', authController.checkAuth, todoController.getTodo)
 
-app.delete('/todo/:todoID', todoController.deleteDoto)
+app.delete('/todo/:todoID', authController.checkAuth, todoController.deleteDoto)
 
-app.put('/todo/:todoID', todoController.updateTodo)
+app.put('/todo/:todoID', authController.checkAuth, todoController.updateTodo)
