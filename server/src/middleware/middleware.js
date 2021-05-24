@@ -6,31 +6,37 @@ Auth = require('../models/auth_schema')
 // get config vars
 dotenv.config();
 
-const generateAuth = async (userID) => {
-  payload = {
-    "user": userID,
-    "email": "email@email.com",
-    "forename": "forename",
-    "surname": "surname",
-    "role": 1,
-    "active": true,
-    "created_at": "2020-12-10",
-    "dob": "1999-07-04"
+const generateAuth = async (userObject) => {
+  var tokens = {};
+  console.log(userObject)
+  
+  let firstPayLoad = {
+    "email": userObject.Email,
+    "forename": userObject.Forename,
+    "surname": userObject.Surname,
+    "dob": userObject.Dob,
+    "role": userObject.Role,
+    "active": userObject.Active
   }
 
-  // todo save in auth table
-  var tokens = {};
-  tokens.access = jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: '5m' })
-
+  tokens.access = jwt.sign(firstPayLoad, process.env.TOKEN_SECRET, { expiresIn: '5m' })
+ 
   let authID = uuidv4()
   payload = {
-    "user": userID,
+    "user": userObject._id,
     "auth": authID
   }
 
   tokens.refresh = jwt.sign(payload, process.env.TOKEN_SECRET, { expiresIn: '6h' });
   tokens.AuthId = authID
 
+  // todo save in auth table
+  let auth = new Auth()
+  auth.authUuid = authID
+  auth.userID = userObject._id
+  
+  await auth.save();
+  
   return tokens
 }
 

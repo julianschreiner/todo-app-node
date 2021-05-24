@@ -11,19 +11,14 @@ const SUCCESSMSG = "SUCCESS"
 /*
  * call other imported services, or same service but different functions here if you need to
 */
+
 const checkAuth = async (req, res, next) => {
-  const idToken = req.headers.authorization
-  let refresh = ""
-  try {
-    const ka = await securityGenerateJWT(120)
-    refresh = ka.refresh
-  } catch (e) {
-    console.log("error: ", e.message)
-  }
+  console.log(req.cookies["refresh"])
+  const refreshToken = "asd"
 
   try {
-    console.log("refresh: ", refresh)
-    const internalresponse = await securityValidateRefresh(refresh)
+    console.log("refresh: ", refreshToken)
+    const internalresponse = await securityValidateRefresh(refreshToken.refresh)
     console.log("after validate: ", internalresponse)
     // other service call (or same service, different function can go here)
     // i.e. - await generateBlogpostPreview()
@@ -48,11 +43,14 @@ const register = async (req, res, next) => {
     const surname = req.body.surname
     const dob = req.body.dob
 
-    const internalresponse = await authServiceRegister(email, password, forename, surname, dob)
+    const userObject = await authServiceRegister(email, password, forename, surname, dob)
+
+    // THEN CALL MIDDLEWARE SIGNIN
+    const signInResponse = await securityGenerateJWT(userObject)
 
     res.json({
       message: SUCCESSMSG,
-      data: internalresponse
+      data: signInResponse
     })
   } catch (e) {
     console.log(e.message)
