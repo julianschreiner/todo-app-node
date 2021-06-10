@@ -75,7 +75,7 @@ const updateTodo = async (todoID, userID, task, due, done) => {
         console.log(toUpdate)
         
         const filter = { _id: ObjectId(todoID), user: userID };
-        const update = { toUpdate };
+        // const update = { toUpdate };
 
         const todoUpdate = await Todo.findOneAndUpdate(filter, toUpdate);
         const ret = await todoUpdate.save();

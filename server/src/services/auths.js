@@ -8,45 +8,62 @@ const { userServiceGetActiveByEmail } = require('./users')
 const { userServiceCreateUser } = require('./users')
 const { lockerServiceGetEntry } = require('./lockers')
 const { lockerServiceCreateLockerEntry } = require('./lockers')
-const { securityGenerateJWT } = require('../middleware/middleware')
 
-const signIn = async () => {
+const signIn = async (email, password) => {
+    console.log(email, password)
+    var userObject = {}
+    var lockerObject = {}
     try {
+        userObject = await userServiceGetActiveByEmail(email)
+        console.log("##userobject: ", userObject)
+        console.log("##parsed objectID: ", userObject._id)
+        
+        if (userObject !== undefined) {
+            let parsedObjectId = userObject._id
+            lockerObject = await lockerServiceGetEntry(parsedObjectId)
+    
+            if (lockerObject === undefined) {
+                return false
+            }
+        }
+
+      
 
     } catch (error) {
         console.log(error)
-        return false
+        return error
+    }
+
+
+
+    if (lockerObject.length !== 0) {
+        const retPW = await bcrypt.compare(password, lockerObject.Password);
+
+        if (retPW === true) {
+            return new Promise((resolve, reject) => {
+                resolve(userObject)
+            })
+        } else {
+            return new Promise((resolve, reject) => {
+                resolve(false)
+            })
+        }
+
     }
 }
 
-const signOut = async () => {
-    try {
-
-    } catch (error) {
-        console.log(error)
-        return false
-    }
-}
-
-const refresh = async () => {
-    try {
-
-    } catch (error) {
-        console.log(error)
-        return false
-    }
-}
-
-const register = async(email, password, forename, surname, dob) => {
+const register = async (email, password, forename, surname, dob) => {
     var pwSecure = false
 
     try {
         // LOOK IF USER IS NOT EXISTING
         const userObject = await userServiceGetActiveByEmail(email)
+        console.log("##user: ", userObject)
         // IF user not existing:
-        if (userObject.length === 0) {
+        if (userObject === undefined || userObject === null) {
             // check if pw is secure
             pwSecure = checkIfPWSecure(password)
+            console.log("##pwsecure: ", pwSecure)
         }
     } catch (error) {
         console.log(error)
@@ -54,11 +71,12 @@ const register = async(email, password, forename, surname, dob) => {
     }
 
     var hashedPw = ""
-    
-    var userCreate = {} 
+
+    var userCreate = {}
     try {
-         // THEN CREATE USER IN USER SERVICE
+        // THEN CREATE USER IN USER SERVICE
         userCreate = await userServiceCreateUser(email, forename, surname, dob, true, 3)
+        console.log("##userCreate: ", userCreate)
     } catch (error) {
         console.log(error)
         return false
@@ -67,7 +85,7 @@ const register = async(email, password, forename, surname, dob) => {
     try {
         if (pwSecure) {
             // CREATE BCRYPT of PW AND STORE INTO LOCKER
-            bcrypt.hash(password, saltRounds, function(err, pw) {
+            bcrypt.hash(password, saltRounds, function (err, pw) {
                 // Now we can store the password hash in db.
                 if (err == null) {
                     hashedPw = pw
@@ -83,16 +101,17 @@ const register = async(email, password, forename, surname, dob) => {
         return false
     }
 
-    return userCreate
+    return new Promise((resolve, reject) => {
+        resolve(userCreate)
+    })
 }
 
 const checkIfPWSecure = (pw) => {
+    console.log("### pw length: ", pw)
     return pw.length > 7
 }
 
 module.exports = {
     authServiceSignIn: signIn,
-    authServiceSignOut: signOut,
-    authServiceRefresh: refresh,
     authServiceRegister: register
 }

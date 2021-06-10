@@ -1,11 +1,12 @@
 const { securityGenerateJWT } = require('../middleware/middleware')
 const { securityValidateRefresh } = require('../middleware/middleware')
+const { securityValidateRefreshToken } = require('../middleware/middleware')
 const { authServiceSignIn } = require('../services/auths')
-const { authServiceSignOut } = require('../services/auths')
-const { authServiceRefresh } = require('../services/auths')
 const { authServiceRegister } = require('../services/auths')
+const { userServiceGetUser } = require('../services/users')
 
 const SUCCESSMSG = "SUCCESS"
+const LOGOUTMSG = "LOGOUT"
 
 //const { auth } = middelwareService
 /*
@@ -13,12 +14,11 @@ const SUCCESSMSG = "SUCCESS"
 */
 
 const checkAuth = async (req, res, next) => {
-  console.log(req.cookies["refresh"])
-  const refreshToken = "asd"
+  let refreshRequest = req.cookies["refresh"]
+  console.log(refreshRequest)
 
   try {
-    console.log("refresh: ", refreshToken)
-    const internalresponse = await securityValidateRefresh(refreshToken.refresh)
+    const internalresponse = await securityValidateRefresh(refreshRequest)
     console.log("after validate: ", internalresponse)
     // other service call (or same service, different function can go here)
     // i.e. - await generateBlogpostPreview()
@@ -45,6 +45,8 @@ const register = async (req, res, next) => {
 
     const userObject = await authServiceRegister(email, password, forename, surname, dob)
 
+    if (!userObject) res.sendStatus(500) && next(e)
+
     // THEN CALL MIDDLEWARE SIGNIN
     const signInResponse = await securityGenerateJWT(userObject)
 
@@ -60,7 +62,20 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   try {
-    res.status(200).send('Login!')
+    let password = req.body.password
+    let email = req.body.email
+
+    const userObject = await authServiceSignIn(email, password)
+    console.log("##controller-login: ", userObject)
+
+    if (!userObject) res.status(403).send('Wrong password or Email!')
+
+    const signInResponse = await securityGenerateJWT(userObject)
+
+    res.json({
+      message: SUCCESSMSG,
+      data: signInResponse
+    })
   } catch (e) {
     console.log(e.message)
     res.sendStatus(500) && next(e)
@@ -70,7 +85,24 @@ const login = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
   try {
-    res.status(200).send('Logout!')
+    let access = req.cookies["access"]
+    console.log("##access: ", access)
+
+    const internalresponse = await securityValidateRefresh(access)
+    console.log("## after validate: ", internalresponse)
+
+    if (internalresponse) {
+      const retDestroyAuth = await securityValidateRefreshToken(access)
+      console.log("## destroyed auth: ", retDestroyAuth)
+      if (retDestroyAuth === false || retDestroyAuth === undefined) res.status(403).send('Something went wrong!')
+
+      res.json({
+        message: LOGOUTMSG
+      })
+
+    } else {
+      res.status(403).send('Something went wrong!')
+    }
   } catch (e) {
     console.log(e.message)
     res.sendStatus(500) && next(e)
@@ -79,7 +111,45 @@ const logout = async (req, res, next) => {
 
 const refresh = async (req, res, next) => {
   try {
-    res.status(200).send('Login!')
+    let refresh = req.cookies["refresh"]
+    let access = req.cookies["access"]
+    console.log("##refresh: ", refresh)
+    console.log('##access', access)
+
+    const internalresponse = await securityValidateRefresh(access)
+    console.log("## after validate: ", internalresponse)
+
+    if (!internalresponse) {
+      // expired
+      const retDestroyAuth = await securityValidateRefreshToken(access)
+      console.log("## destroyed auth: ", retDestroyAuth)
+      if (retDestroyAuth === false || retDestroyAuth === undefined) res.status(403).send('Something went wrong!')
+
+      // call user server with retDestroyAuth.userID
+      const userObject = await userServiceGetUser(retDestroyAuth.userID)
+      console.log("##controller user: ", userObject)
+      
+      // sign in 
+      const jwt = await securityGenerateJWT(userObject)
+      
+      res.json({
+        message: SUCCESSMSG,
+        data: {
+          "access": access,
+          "refresh": jwt,
+        }
+      })
+
+    }
+
+    res.json({
+      message: SUCCESSMSG,
+      data: {
+        "access": access,
+        "refresh": refresh,
+      }
+    })
+
   } catch (e) {
     console.log(e.message)
     res.sendStatus(500) && next(e)
